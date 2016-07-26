@@ -21,7 +21,7 @@ extension Zip {
      
      - returns: NSURL of the destination folder.
      */
-    public class func quickUnzipFile(path: NSURL) throws -> NSURL {
+    public class func quickUnzipFile(_ path: URL) throws -> URL {
         return try quickUnzipFile(path, progress: nil)
     }
     
@@ -37,16 +37,16 @@ extension Zip {
      
      - returns: NSURL of the destination folder.
      */
-    public class func quickUnzipFile(path: NSURL, progress: ((progress: Double) -> ())?) throws -> NSURL {
-        let fileManager = NSFileManager.defaultManager()
+    public class func quickUnzipFile(_ path: URL, progress: ((progress: Double) -> ())?) throws -> URL {
+        let fileManager = FileManager.default
         guard let fileExtension = path.pathExtension, let fileName = path.lastPathComponent else {
-            throw ZipError.UnzipFail
+            throw ZipError.unzipFail
         }
-        let directoryName = fileName.stringByReplacingOccurrencesOfString(".\(fileExtension)", withString: "")
-        let documentsUrl = fileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0] as NSURL
+        let directoryName = fileName.replacingOccurrences(of: ".\(fileExtension)", with: "")
+        let documentsUrl = fileManager.urlsForDirectory(.documentDirectory, inDomains: .userDomainMask)[0] as URL
         
-        guard let destinationUrl = documentsUrl.URLByAppendingPathComponent(directoryName, isDirectory: true) else {
-            throw ZipError.UnzipFail
+        guard let destinationUrl = try? documentsUrl.appendingPathComponent(directoryName, isDirectory: true) else {
+            throw ZipError.unzipFail
         }
         try self.unzipFile(path, destination: destinationUrl, overwrite: true, password: nil, progress: progress)
         return destinationUrl
@@ -66,7 +66,7 @@ extension Zip {
      
      - returns: NSURL of the destination folder.
      */
-    public class func quickZipFiles(paths: [NSURL], fileName: String) throws -> NSURL {
+    public class func quickZipFiles(_ paths: [URL], fileName: String) throws -> URL {
         return try quickZipFiles(paths, fileName: fileName, progress: nil)
     }
     
@@ -83,13 +83,15 @@ extension Zip {
      
      - returns: NSURL of the destination folder.
      */
-    public class func quickZipFiles(paths: [NSURL], fileName: String, progress: ((progress: Double) -> ())?) throws -> NSURL {
-        let fileManager = NSFileManager.defaultManager()
-        let documentsUrl = fileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0] as NSURL
-        guard let destinationUrl = documentsUrl.URLByAppendingPathComponent("\(fileName).zip") else {
-            throw ZipError.ZipFail
-        }
+    public class func quickZipFiles(_ paths: [URL], fileName: String, progress: ((progress: Double) -> ())?) throws -> URL {
+        let fileManager = FileManager.default
+        let documentsUrl = fileManager.urlsForDirectory(.documentDirectory, inDomains: .userDomainMask)[0] as URL
         
+
+        guard let destinationUrl = try? documentsUrl.appendingPathComponent("\(fileName).zip") else {
+            throw ZipError.zipFail
+        }
+       
         try self.zipFiles(paths, zipFilePath: destinationUrl, password: nil, progress: progress)
         return destinationUrl
     }
